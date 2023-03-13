@@ -1,118 +1,61 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import React, { useState, useEffect } from 'react';
+import { Button, TextInput } from 'react-native';
+import auth from '@react-native-firebase/auth';
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+function App() {
+  // If null, no SMS has been sent
+  const [confirm, setConfirm] = useState(null);
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+  // verification code (OTP - One-Time-Passcode)
+  const [code, setCode] = useState('');
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+  // Handle login
+  function onAuthStateChanged(user:any) {
+    if (user) {
+      // Some Android devices can automatically process the verification code (OTP) message, and the user would NOT need to enter the code.
+      // Actually, if he/she tries to enter it, he/she will get an error message because the code was already used in the background.
+      // In this function, make sure you hide the component(s) for entering the code and/or navigate away from this screen.
+      // It is also recommended to display a message to the user informing him/her that he/she has successfully logged in.
+    }
+  }
 
-function Section({children, title}: SectionProps): JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
+  useEffect(() => {
+    const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
+    return subscriber; // unsubscribe on unmount
+  }, []);
 
-function App(): JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+  // Handle the button press
+  async function signInWithPhoneNumber(phoneNumber:any) {
+    const confirmation = await auth().signInWithPhoneNumber('+91 7000440272');
+    console.log("confirmation",confirmation)
+    setConfirm(confirmation);
+  }
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
+  async function confirmCode() {
+    try {
+      await confirm.confirm(code);
+    } catch (error) {
+      console.log('Invalid code.');
+    }
+  }
 
-  return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
+  if (!confirm) {
+    return (
+      <Button
+        title="Phone Number Sign In"
+        onPress={() => signInWithPhoneNumber('+1 650-555-3434')}
       />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    );
+  }
+
+  console.log("confirm @@@@@", code)
+
+  return (
+    <>
+      <TextInput value={code} onChangeText={text => setCode(text)} />
+      <Button title="Confirm Code" onPress={() => confirmCode()} />
+    </>
   );
 }
 
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
-
-export default App;
+export default App
